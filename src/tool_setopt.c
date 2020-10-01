@@ -238,7 +238,8 @@ static char *c_escape(const char *str, size_t len)
     return NULL;
 
   e = escaped;
-  for(s = str; (c = *s) != '\0'; s++) {
+  for(s = str; len; s++, len--) {
+    c = *s;
     if(c == '\n') {
       strcpy(e, "\\n");
       e += 2;
@@ -623,7 +624,8 @@ CURLcode tool_setopt_slist(CURL *curl, struct GlobalConfig *config,
 
 /* generic setopt wrapper for all other options.
  * Some type information is encoded in the tag value. */
-CURLcode tool_setopt(CURL *curl, bool str, struct GlobalConfig *config,
+CURLcode tool_setopt(CURL *curl, bool str, struct GlobalConfig *global,
+                     struct OperationConfig *config,
                      const char *name, CURLoption tag, ...)
 {
   va_list arg;
@@ -711,14 +713,17 @@ CURLcode tool_setopt(CURL *curl, bool str, struct GlobalConfig *config,
 
   va_end(arg);
 
-  if(config->libcurl && !skip && !ret) {
+  if(global->libcurl && !skip && !ret) {
     /* we only use this for real if --libcurl was used */
 
     if(remark)
       REM2("%s set to a %s", name, value);
     else {
       if(escape) {
-        escaped = c_escape(value, CURL_ZERO_TERMINATED);
+        size_t len = CURL_ZERO_TERMINATED;
+        if(tag == CURLOPT_POSTFIELDS)
+          len = config->postfieldsize;
+        escaped = c_escape(value, len);
         NULL_CHECK(escaped);
         CODE2("curl_easy_setopt(hnd, %s, \"%s\");", name, escaped);
       }
