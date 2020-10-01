@@ -240,7 +240,7 @@ static char *c_escape(const char *str, curl_off_t len)
   }
 
   /* Allocate space based on worst-case */
-  escaped = malloc(4 * len + 1 + cutoff);
+  escaped = malloc(4 * (size_t)len + 1 + cutoff);
   if(!escaped)
     return NULL;
 
