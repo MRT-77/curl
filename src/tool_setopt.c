@@ -228,17 +228,19 @@ static char *c_escape(const char *str, curl_off_t len)
   const char *s;
   unsigned char c;
   char *escaped, *e;
-  bool cutoff = FALSE;
+  int cutoff = 0;
 
   if(len == ZERO_TERMINATED)
     len = strlen(str);
 
-  if(len > MAX_STRING_LENGTH_OUTPUT)
+  if(len > MAX_STRING_LENGTH_OUTPUT) {
     /* cap ridiculously long strings */
     len = MAX_STRING_LENGTH_OUTPUT;
+    cutoff = 3;
+  }
 
   /* Allocate space based on worst-case */
-  escaped = malloc(4 * len + 1 + cutoff * 3);
+  escaped = malloc(4 * len + 1 + cutoff);
   if(!escaped)
     return NULL;
 
@@ -272,11 +274,8 @@ static char *c_escape(const char *str, curl_off_t len)
     else
       *e++ = c;
   }
-  if(cutoff) {
+  while(cutoff--)
     *e++ = '.';
-    *e++ = '.';
-    *e++ = '.';
-  }
   *e = '\0';
   return escaped;
 }
